@@ -4,9 +4,17 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/textproto"
 	"os"
 	"path"
+	"strings"
 )
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
+}
 
 type FormBuilder interface {
 	CreateFormFile(fieldname string, file *os.File) error
@@ -39,7 +47,12 @@ func (fb *DefaultFormBuilder) createFormFile(fieldname string, r io.Reader, file
 		return fmt.Errorf("filename cannot be empty")
 	}
 
-	fieldWriter, err := fb.writer.CreateFormFile(fieldname, filename)
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			escapeQuotes(fieldname), escapeQuotes(filename)))
+	h.Set("Content-Type", "image/png")
+	fieldWriter, err := fb.writer.CreatePart(h)
 	if err != nil {
 		return err
 	}

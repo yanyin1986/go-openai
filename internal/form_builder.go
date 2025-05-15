@@ -17,7 +17,7 @@ func escapeQuotes(s string) string {
 }
 
 type FormBuilder interface {
-	CreateFormFile(fieldname string, file *os.File) error
+	CreateFormFile(fieldname string, file *io.Reader) error
 	CreateFormFileReader(fieldname string, r io.Reader, filename string) error
 	WriteField(fieldname, value string) error
 	Close() error
